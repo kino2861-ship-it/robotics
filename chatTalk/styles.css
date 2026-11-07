@@ -172,6 +172,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #087e41; outline-
   .bubble { max-width: min(79%, 480px); font-size: 15px; }
   .header-reset span { display: none; }
   .header-reset { padding: 8px; }
+  .reset-dialog-actions button:focus-visible { outline: none; }
 }
 @media (hover: hover) and (pointer: fine) {
   .conversation-item:hover { background: #dff4e6; }
