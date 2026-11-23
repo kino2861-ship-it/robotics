@@ -4,10 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#273d36" />
-    <meta name="description" content="送信内容に応じて会話が進む、LINE風のチャット体験。" />
-    <title>トーク | チャットシミュレーター</title>
+    <meta name="description" content="チャットを始めましょう！" />
+    <title>トーク | chatTalk</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2306c755'/%3E%3Cpath d='M14 22h36v22H31l-10 7v-7h-7z' fill='white'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./file-card.css" />
+    <script src="./file-card.js" defer></script>
+    <script src="./clear-card.js" defer></script>
     <script src="./uni-story.js" defer></script>
     <script src="./story-compiler.js" defer></script>
     <script src="./script.js" defer></script>
@@ -20,8 +23,8 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v11H9l-4 3v-3H4z" /></svg>
         </button>
         <div class="rail-spacer"></div>
-        <button class="rail-button rail-bottom" id="rail-reset" type="button" aria-label="すべてのトークを最初からやり直す" title="すべてのトークを最初からやり直す">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 1-2.4-5.7M20 4v6h-6" /></svg>
+        <button class="rail-button rail-bottom" id="rail-reset" type="button" aria-label="トークメニュー" aria-haspopup="dialog" aria-controls="chat-menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
       </nav>
 
@@ -39,8 +42,8 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 4-8 8 8 8" /></svg>
           </button>
           <div class="header-person"><div class="avatar avatar-header" aria-hidden="true"></div><div><div class="contact-name"></div><div class="contact-caption">個人トーク</div></div></div>
-          <button class="header-reset" id="header-reset" type="button" aria-label="すべてのトークを最初からやり直す" title="すべてのトークを最初からやり直す">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 1-2.4-5.7M20 4v6h-6" /></svg><span>最初から</span>
+          <button class="header-reset" id="header-reset" type="button" aria-label="トークメニュー" aria-haspopup="dialog" aria-controls="chat-menu">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg><span>メニュー</span>
           </button>
         </header>
 
@@ -71,6 +74,13 @@
         <p>左の一覧から、話したい相手を選んでください。</p>
       </section>
     </div>
+    <dialog id="chat-menu" class="reset-dialog" aria-label="トークメニュー">
+      <form method="dialog" class="chat-menu-actions">
+        <button class="menu-close" aria-label="閉じる">×</button>
+        <button type="button" id="menu-undo">送信取り消し</button>
+        <button type="button" id="menu-reset">UNIとのトークをやり直す</button>
+      </form>
+    </dialog>
     <dialog id="reset-dialog" class="reset-dialog" role="alertdialog" aria-labelledby="reset-title" aria-describedby="reset-description">
       <div class="reset-dialog-body" aria-live="polite" aria-atomic="true">
         <h2 id="reset-title">リセットの確認</h2>
@@ -93,7 +103,6 @@
           <p id="tutorial-description">下の欄をタッチして、メッセージを選びます。文字入力を求められたら、ここに回答を入力します。</p>
         </div>
         <div class="tutorial-footer">
-          <button id="tutorial-skip" class="tutorial-skip" type="button">スキップ</button>
           <button id="tutorial-back" class="tutorial-back" type="button" hidden>戻る</button>
           <button id="tutorial-next" class="tutorial-next" type="button" autofocus><span>次へ</span></button>
         </div>
