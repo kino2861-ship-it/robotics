@@ -1,0 +1,4 @@
+.file-card { display: flex; align-items: center; gap: .75em; line-height: 1.45; color: #357b69; }
+.file-card strong { display: block; color: #18251f; font-size: 1.12em; }
+.file-icon { flex: 0 0 3.4em; height: 3.4em; display: grid; place-items: center; border: 1px solid #ccc; border-radius: .65em; background: white; }
+.file-icon::before { content: ''; width: 1.55em; height: 1.95em; background: linear-gradient(135deg, #909090 50%, transparent 51%) bottom right / .53em .53em no-repeat, white; border: 2px solid #909090; clip-path: polygon(0 0, 100% 0, 100% 73%, 66% 100%, 0 100%); }
