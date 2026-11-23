@@ -44,7 +44,7 @@ try {
 
 const chats = new Map(CHAT_SCRIPTS.map(script => [script.id, {
   script, storageKey: `chat-simulator:${script.id}:state-v${STORAGE_SCHEMA_VERSION}`, startedAt: Date.now(),
-  transcript: [], completed: new Set(), activePromptId: null,
+  transcript: [], undoHistory: [], completed: new Set(), activePromptId: null,
   visitedTroubles: new Set(), activeTroubleId: null, replayTroubleId: null,
   pendingJob: null, unreadCount: 0, hasOpened: false, generation: 0, draft: ''
 }]));
@@ -66,7 +66,7 @@ function saveState(chat) {
       visitedTroubles: [...chat.visitedTroubles], activeTroubleId: chat.activeTroubleId,
       replayTroubleId: chat.replayTroubleId,
       pendingJob: chat.pendingJob, unreadCount: chat.unreadCount,
-      hasOpened: chat.hasOpened, draft: chat.draft, lastSend: chat.lastSend
+      hasOpened: chat.hasOpened, draft: chat.draft, undoHistory: chat.undoHistory
     }));
   } catch (_) { /* 保存できない環境でも会話は続けられます。 */ }
 }
@@ -672,7 +672,7 @@ async function send(raw) {
   if (answer?.once && chat.completed.has(answer.id)) return showNotice('このメッセージは送信済みです');
   if (item && !isUnlocked(chat, item)) return showNotice(item.lockedHint || '先に必要なメッセージを送ってね');
   const startsConversation = chat.script.opening.length === 0 && chat.completed.size === 0;
-  chat.lastSend = beforeSend;
+  chat.undoHistory.push(beforeSend);
   closePicker();
   chat.draft = '';
   elements.input.value = '';
@@ -714,7 +714,7 @@ async function send(raw) {
   await runPending(chat, chat.generation);
 }
 function resetConversation(chat = active, render = true, startedAt = Date.now()) {
-  chat.lastSend = null;
+  chat.undoHistory.length = 0;
   chat.generation++;
   chat.startedAt = startedAt;
   chat.transcript = [];
@@ -796,10 +796,10 @@ function restoreConversation(chat) {
     break;
   }
   if (!saved) return false;
-  const undo = saved.lastSend;
-  chat.lastSend = undo && Number.isInteger(undo.length) && undo.length >= 0 &&
-    saved.transcript[undo.length]?.mine && Array.isArray(undo.completed) &&
-    Array.isArray(undo.visitedTroubles) ? undo : null;
+  const history = Array.isArray(saved.undoHistory) ? saved.undoHistory : [saved.lastSend];
+  chat.undoHistory = history.filter(state => state && Number.isInteger(state.length) &&
+    state.length >= 0 && saved.transcript[state.length]?.mine &&
+    Array.isArray(state.completed) && Array.isArray(state.visitedTroubles));
   chat.startedAt = Number.isFinite(saved.startedAt) ? saved.startedAt : Date.now();
   chat.transcript = saved.transcript;
   for (const record of chat.transcript) {
@@ -839,6 +839,9 @@ function restoreConversation(chat) {
         duplicate.text.trim() === zipName) {
       if (duplicateIndex >= chat.transcript.length - chat.unreadCount) chat.unreadCount--;
       chat.transcript.splice(duplicateIndex, 1);
+      for (const state of chat.undoHistory) {
+        if (state.length > duplicateIndex) state.length--;
+      }
       migrated = true;
     }
   }
@@ -892,7 +895,7 @@ const undoButton = $('#menu-undo');
 function openChatMenu() {
   closePicker();
   closeTutorial(false);
-  undoButton.disabled = !active.lastSend;
+  undoButton.disabled = active.undoHistory.length === 0;
   chatMenu.showModal();
 }
 $('#header-reset').addEventListener('click', openChatMenu);
@@ -905,14 +908,14 @@ undoButton.addEventListener('click', () => {
   chatMenu.close();
   resetDialog.step = 'undo';
   resetDialog.title.textContent = '送信取り消し';
-  resetDialog.description.textContent = '直近で送ったチャットの送信を取り消しますか？それ以前のトークの内容は取り消されません。';
+  resetDialog.description.textContent = '直近の送信と、それに続く返信を取り消しますか？';
   resetDialog.confirm.textContent = 'はい';
   resetDialog.cancel.textContent = 'いいえ';
   resetDialog.dialog.showModal();
   resetDialog.cancel.focus();
 });
 function undoLastSend(chat) {
-  const state = chat.lastSend;
+  const state = chat.undoHistory.pop();
   if (!state) return;
   chat.generation++;
   chat.pendingJob = null;
@@ -924,7 +927,6 @@ function undoLastSend(chat) {
   chat.replayTroubleId = state.replayTroubleId;
   chat.draft = state.draft;
   chat.unreadCount = state.unreadCount;
-  chat.lastSend = null;
   saveState(chat);
   renderConversation(chat);
 }
