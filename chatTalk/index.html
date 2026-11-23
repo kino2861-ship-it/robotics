@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
+    <meta name="theme-color" content="#273d36" />
+    <meta name="description" content="チャットを始めましょう！" />
+    <title>トーク | chatTalk</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2306c755'/%3E%3Cpath d='M14 22h36v22H31l-10 7v-7h-7z' fill='white'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./file-card.css" />
+    <script src="./file-card.js" defer></script>
+    <script src="./clear-card.js" defer></script>
+    <script src="./uni-story.js" defer></script>
+    <script src="./story-compiler.js" defer></script>
+    <script src="./script.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="rail" aria-label="アプリメニュー">
+        <div class="rail-avatar" aria-label="自分のプロフィール">あ</div>
+        <button class="rail-button active" type="button" aria-label="トーク" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v11H9l-4 3v-3H4z" /></svg>
+        </button>
+        <div class="rail-spacer"></div>
+        <button class="rail-button rail-bottom" id="rail-reset" type="button" aria-label="トークメニュー" aria-haspopup="dialog" aria-controls="chat-menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+      </nav>
+
+      <aside class="conversation-list" id="conversation-list" aria-label="トーク一覧">
+        <div class="list-heading"><h1 id="list-title" tabindex="-1">トーク</h1><span class="list-count" id="list-count"></span></div>
+        <div class="list-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m16 16 4.2 4.2"/></svg><span>トークを検索</span></div>
+        <div class="list-section">すべて</div>
+        <div id="conversation-items"></div>
+        <div class="mobile-tabbar" aria-label="現在のタブ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v11H9l-4 3v-3H4z" /></svg><span>トーク</span></div>
+      </aside>
+
+      <main class="chat-panel" id="chat-panel" tabindex="-1">
+        <header class="chat-header">
+          <button class="back-button" id="back-to-list" type="button" aria-label="トーク一覧に戻る">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 4-8 8 8 8" /></svg>
+          </button>
+          <div class="header-person"><div class="avatar avatar-header" aria-hidden="true"></div><div><div class="contact-name"></div><div class="contact-caption">個人トーク</div></div></div>
+          <button class="header-reset" id="header-reset" type="button" aria-label="トークメニュー" aria-haspopup="dialog" aria-controls="chat-menu">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg><span>メニュー</span>
+          </button>
+        </header>
+
+        <div class="chat-scroll" id="chat-scroll" role="log" aria-live="polite" aria-label="トーク">
+          <div class="chat-content" id="messages"></div>
+        </div>
+
+        <div class="picker-backdrop" id="picker-backdrop" hidden></div>
+        <section class="composer" aria-label="メッセージを作成">
+          <div class="choice-panel" id="choice-panel" role="dialog" aria-label="送れるメッセージを選択" hidden>
+            <div class="suggestion-heading"><span id="suggestion-heading">送れるメッセージ</span><button id="picker-back" type="button" hidden>戻る</button></div>
+            <div class="suggestions" id="suggestions"></div>
+            <p class="picker-empty" id="picker-empty" hidden>以前内容はありません。</p>
+          </div>
+          <div class="prompt-actions" id="prompt-actions" hidden></div>
+          <form id="message-form" class="input-row" autocomplete="off">
+            <label class="sr-only" for="message-input">メッセージを入力</label>
+            <input id="message-input" type="text" placeholder="メッセージを入力" readonly inputmode="none" enterkeyhint="send" aria-haspopup="dialog" aria-controls="choice-panel" aria-expanded="false" />
+            <button id="send-button" class="send-button" type="submit" aria-label="送信" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11.5 17-8-4.4 17-3.1-7.2zM12.5 13.3 20 3.5" /></svg>
+            </button>
+          </form>
+        </section>
+      </main>
+      <section class="chat-placeholder" aria-label="トークを選択">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 10h32v24H22L12 41v-7H8z"/><path d="M16 19h16M16 25h11"/></svg>
+        <h2>トークを選択</h2>
+        <p>左の一覧から、話したい相手を選んでください。</p>
+      </section>
+    </div>
+    <dialog id="chat-menu" class="reset-dialog" aria-label="トークメニュー">
+      <form method="dialog" class="chat-menu-actions">
+        <button class="menu-close" aria-label="閉じる">×</button>
+        <button type="button" id="menu-undo">送信取り消し</button>
+        <button type="button" id="menu-reset">UNIとのトークをやり直す</button>
+      </form>
+    </dialog>
+    <dialog id="reset-dialog" class="reset-dialog" role="alertdialog" aria-labelledby="reset-title" aria-describedby="reset-description">
+      <div class="reset-dialog-body" aria-live="polite" aria-atomic="true">
+        <h2 id="reset-title">リセットの確認</h2>
+        <p id="reset-description">UNIのすべてのトーク履歴とメモリをリセットしますか？この処理は取り消しできません。</p>
+      </div>
+      <div class="reset-dialog-actions">
+        <button id="reset-cancel" type="button" autofocus>リセットしない</button>
+        <button id="reset-confirm" type="button">リセットする</button>
+      </div>
+    </dialog>
+    <dialog id="chat-tutorial" class="tutorial" aria-labelledby="tutorial-title" aria-describedby="tutorial-description">
+      <div class="tutorial-spotlight" aria-hidden="true"></div>
+      <section class="tutorial-card">
+        <div class="tutorial-topline">
+          <span class="tutorial-label">操作説明</span>
+          <span id="tutorial-step" class="tutorial-step">1 / 3</span>
+        </div>
+        <div class="tutorial-body" aria-live="polite" aria-atomic="true">
+          <h2 id="tutorial-title">メッセージ欄をタッチ</h2>
+          <p id="tutorial-description">下の欄をタッチして、メッセージを選びます。文字入力を求められたら、ここに回答を入力します。</p>
+        </div>
+        <div class="tutorial-footer">
+          <button id="tutorial-back" class="tutorial-back" type="button" hidden>戻る</button>
+          <button id="tutorial-next" class="tutorial-next" type="button" autofocus><span>次へ</span></button>
+        </div>
+      </section>
+    </dialog>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+  </body>
+</html>
