@@ -6,6 +6,7 @@ const CHAT_SCRIPTS = [window.compileUniStory(window.UNI_STORY), {
 
 // 自分のアイコン画像。未設定なら従来の文字アイコンを表示する。
 const SELF_AVATAR = '';
+const IMAGE_DISPLAY_ERROR = '画像の表示に失敗しました';
 
 const $ = selector => document.querySelector(selector);
 const elements = {
@@ -152,12 +153,12 @@ function promptMessage(message, input) {
     ? { ...parts, text: parts.text.replaceAll('{input}', input) } : parts;
 }
 function messageRecords(message, mine, iso = new Date().toISOString()) {
-  const { text = '', image, alt, placeholder, file } = messageParts(message);
+  const { text = '', image, alt, file } = messageParts(message);
   const details = { mine, iso, read: false };
   const records = [];
   if (text || (!image && !file)) records.push({ text, ...details });
   if (file) records.push({ text: '', file, ...details });
-  if (image) records.push({ text: '', image, alt: alt || '画像', placeholder, ...details });
+  if (image) records.push({ text: '', image, alt: alt || '画像', ...details });
   return records;
 }
 function messagePreview(message) {
@@ -167,10 +168,15 @@ function setAvatar(element, name, image) {
   element.replaceChildren();
   if (image) {
     const img = document.createElement('img');
-    img.src = image;
     img.alt = '';
-    img.addEventListener('error', () => { img.remove(); element.textContent = name.slice(0, 1); }, { once: true });
+    img.addEventListener('error', () => {
+      const fallback = document.createElement('span');
+      fallback.className = 'avatar-image-error';
+      fallback.textContent = IMAGE_DISPLAY_ERROR;
+      img.replaceWith(fallback);
+    }, { once: true });
     element.append(img);
+    img.src = image;
   } else {
     element.textContent = name.slice(0, 1);
   }
@@ -256,7 +262,7 @@ function renderRecord(chat, record, index) {
     if (sent) {
       bubble.append(createClearCard('./images/clearCard.jpg', chat.startedAt, Date.parse(sent.iso), scrollToLatest));
     } else {
-      bubble.textContent = '修理時間の記録が見つかりません。';
+      bubble.textContent = IMAGE_DISPLAY_ERROR;
     }
   } else if (record.image) {
     bubble.classList.add('has-image');
@@ -264,24 +270,15 @@ function renderRecord(chat, record, index) {
     const img = document.createElement('img');
     img.className = 'message-image';
     img.alt = record.alt || '画像';
-    if (record.placeholder) {
-      // 読み込み完了まで非表示にするため、表示領域に入るのを待たずに読み込む。
-      const placeholder = document.createElement('div');
-      placeholder.className = 'image-placeholder';
-      placeholder.setAttribute('role', 'img');
-      placeholder.setAttribute('aria-label', record.alt || '画像');
-      placeholder.textContent = record.placeholder;
-      img.hidden = true;
-      img.addEventListener('load', () => {
-        placeholder.remove();
-        img.hidden = false;
-        scrollToLatest();
-      }, { once: true });
-      bubble.append(placeholder);
-    } else {
-      img.loading = 'lazy';
-      img.addEventListener('load', scrollToLatest, { once: true });
-    }
+    img.loading = 'lazy';
+    img.addEventListener('load', scrollToLatest, { once: true });
+    img.addEventListener('error', () => {
+      const fallback = document.createElement('div');
+      fallback.className = 'image-placeholder';
+      fallback.textContent = IMAGE_DISPLAY_ERROR;
+      img.replaceWith(fallback);
+      scrollToLatest();
+    }, { once: true });
     bubble.append(img);
     img.src = record.image;
   }
