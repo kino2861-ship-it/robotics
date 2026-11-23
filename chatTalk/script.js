@@ -264,8 +264,8 @@ function renderRecord(chat, record, index) {
     const img = document.createElement('img');
     img.className = 'message-image';
     img.alt = record.alt || '画像';
-    img.loading = 'lazy';
     if (record.placeholder) {
+      // 読み込み完了まで非表示にするため、表示領域に入るのを待たずに読み込む。
       const placeholder = document.createElement('div');
       placeholder.className = 'image-placeholder';
       placeholder.setAttribute('role', 'img');
@@ -279,6 +279,7 @@ function renderRecord(chat, record, index) {
       }, { once: true });
       bubble.append(placeholder);
     } else {
+      img.loading = 'lazy';
       img.addEventListener('load', scrollToLatest, { once: true });
     }
     bubble.append(img);
